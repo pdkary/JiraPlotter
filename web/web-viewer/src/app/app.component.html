@@ -1,0 +1,10 @@
+<!--The content below is only a placeholder and can be replaced.-->
+<app-image-viewer [images]="images" [expanderBgColor]="bgColor" [expanderTextColor]="textColor">
+  <ng-template let-image>
+      <div class="image">// customize this block can be updated according to your requirements.
+          <h2>{{ image.thumbnailUrl }}</h2>
+          <p>{{ image.previewUrl }}</p>
+      </div>
+  </ng-template>
+</app-image-viewer>
+
