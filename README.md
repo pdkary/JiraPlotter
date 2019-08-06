@@ -7,8 +7,8 @@ A data visualization project for analyzing sprint velocity
 After inputting your Jira-Api token, username, and server domain into the **resources.py** file, in the main method of **jiraplotter.py** create a new instance of **JiraPlotter** 
 ```
 projectKey = "Integrations"
-jiraplotter = JiraPlotter(projectKey)
+jiraplotter = JiraPlotter(qualifier=projectKey,confidence=.80)
 jiraplotter.get_figure()
 ```
-The graph for the project "Integrations" will now appear as **static/images/Integrations_\<date\>.png***
+The graph for the project "Integrations" will now appear as **static/images/Integrations_\<confidence_level\>_\<date\>.png**
 
