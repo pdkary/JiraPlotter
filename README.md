@@ -10,5 +10,5 @@ projectKey = "Integrations"
 jiraplotter = JiraPlotter(projectKey)
 jiraplotter.get_figure()
 ```
-The graph for the project "Integrations" will now appear as **static/images/Integrations_\<date\>.png***
+The graph for the project "Integrations" will now appear as **static/images/Integrations_\<confidence_level\>_\<date\>.png***
 
