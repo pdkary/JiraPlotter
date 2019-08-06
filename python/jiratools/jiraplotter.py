@@ -4,11 +4,11 @@ import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
-import pandas as pd
 import os
 import matplotlib
 import resources.resources as rs
-from datatime import datetime
+from datetime import datetime
+from jiratools.BoardData import BoardData
 
 matplotlib.use('agg')
 options = {
@@ -23,10 +23,8 @@ class JiraPlotter:
         self.qualifier = qualifier
         self.confidence = confidence
         self.auth_jira = jira.JIRA(options=options, basic_auth=(rs.user_name, rs.api_token))
+        self.infostr_props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         self.board_dict = {}
-        self.velocity_dict = {}
-        self.velocity_dict_init()
-        self.clean_velocity_dict()
 
     @property
     def boards(self):
@@ -35,15 +33,32 @@ class JiraPlotter:
 
     @property
     def committed(self):
-        l = [self.velocity_dict[x]['committed'].tolist() for x in self.velocity_dict.keys()]
+        l = [self.board_dict[x].velocity_df['committed'].tolist() for x in self.board_dict.keys()]
         return [item for sublist in l for item in sublist]
 
     @property
     def completed(self):
-        l = [self.velocity_dict[x]['completed'].tolist() for x in self.velocity_dict.keys()]
+        l = [self.board_dict[x].velocity_df['completed'].tolist() for x in self.board_dict.keys()]
         return [item for sublist in l for item in sublist]
 
-    def analyze(self):
+    @property
+    def infostr(self):
+        return "\n".join((
+            r'$R^2=%.2f$' % self.Rsquared,
+            r'$y = {0:.3g}x + {1:.3g}$'.format(self.coeffs[0], self.coeffs[1]),
+            r'boards=%s' % ("\n              ".join([x.name for x in self.boards]))
+        ))
+
+    def get_board_dict(self):
+        board_dict = {}
+        print("\nGathering velocity information for " + self.qualifier)
+        for x in tqdm.tqdm(self.boards):
+            board_dict[x.name] = BoardData(x.name, x.id)
+            board_dict[x.name].get_sprints()
+        self.board_dict = board_dict
+        return board_dict
+
+    def get_confidence(self):
         if len(self.committed) == 0:
             return False
         n = len(self.completed)
@@ -73,67 +88,63 @@ class JiraPlotter:
         self.Rsquared = 1 - SSRes / np.sqrt(SSy ** 2 + SSx ** 2)
         return True
 
-    def get_figure(self):
-        if self.analyze():
-            infostr = "\n".join((
-                r'$R^2=%.2f$' % (self.Rsquared),
-                r'$y = {0:.3g}x + {1:.3g}$'.format(self.coeffs[0], self.coeffs[1]),
-                r'boards=%s' % ("\n              ".join([x.name for x in self.boards]))
-            ))
-            props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    def prune(self):
+        print("\nRemoving outliers and empty datasets")
+        for board_name in tqdm.tqdm(self.board_dict.keys()):
+            board = self.board_dict[board_name]
+            if not board.velocity_df.empty:
+                board.velocity_df = board.velocity_df[(board.velocity_df.T != 0).any()]
+                board.velocity_df = board.velocity_df[
+                    (np.abs(stats.zscore(board.velocity_df)) < self.outlier_zscore_threshold).all(axis=1)]
 
-            plt.plot(self.committed, self.completed, 'ro', label="data points")
-            plt.plot(self.x_values, self.y_values, '-', color="blue", label="trendline")
-            plt.plot(self.x_values, self.ciy_plus, '-', color="green", label="Upper CI")
-            plt.plot(self.x_values, self.ciy_minus, '-', color="green", label="Lower CI")
-            plt.plot(self.x_values, self.x_values, '--', color="grey", label="y=x")
+    def get_figure(self):
+        if self.get_confidence():
+            xlim = self.x_values.max() * 1.1
+            ylim = max(self.ciy_plus.max(), self.y_values.max()) * 1.1
+            count = self.x_values.shape[0]
+            shape = self.x_values.shape
+
+            x = np.linspace(0, xlim, count)
+            ymax = np.ones(shape=shape) * ylim
+            zeros = np.zeros(shape=shape)
+
+            fig = plt.figure()
+            ax = plt.subplot(111)
+            chartBox = ax.get_position()
+
+            ax.plot(self.committed, self.completed, 'ro', label="data points")
+            ax.plot(self.x_values, self.y_values, '-', color="blue", label="trendline")
+            ax.plot(x, x, '--', color="grey", label="y=x")
+
+            ax.set_position([chartBox.x0*0.8, chartBox.y0*2.50, chartBox.width * 0.8, chartBox.height*0.8])
+            ax.legend(loc='upper center', bbox_to_anchor=(1.2, 1), shadow=True, ncol=1)
+            ax.text(1.05, .7, self.infostr, verticalalignment="top", transform=ax.transAxes, bbox=self.infostr_props,
+                    fontsize=9)
+
+            plt.fill_between(x, self.ciy_plus, ymax, where=ymax > self.ciy_plus, facecolor="#DDDDDD",
+                             interpolate=True)
+            plt.fill_between(x, zeros, self.ciy_minus, where=self.ciy_minus > zeros, facecolor="#DDDDDD",
+                             interpolate=True)
+            plt.xlim((0, xlim))
+            plt.ylim((0, ylim))
+            plt.grid()
+            plt.title("%s team story analysis with %d%% Confidence" % (self.qualifier, self.confidence * 100))
             plt.xlabel('Committed Stories')
             plt.ylabel("Completed Stories")
-            plt.grid()
-            plt.legend()
-            plt.text(max(self.x_values) * .7, min(self.ciy_minus), infostr, bbox=props)
-            plt.title("%s team story analysis with %d%% Confidence" % (self.qualifier, self.confidence * 100))
-            #get datetime
+            # get datetime
             now = datetime.now()
-            dt_string = now.strftime("%d/%m/%Y")
+            dt_string = now.strftime("%d-%m-%Y")
             # save to file
             filesuffix = self.qualifier if self.qualifier != "" else "all"
-            filepath = os.pardir + '/static/images/plot_' + filesuffix + dt_string + '.png'
+            filepath = os.pardir + '/static/images/plot_' + filesuffix + "_" + str(
+                self.confidence * 100) + "_" + dt_string + '.png'
             plt.savefig(filepath)
             plt.close()
 
-    def velocity_dict_init(self):
-        print("\nGathering velocity information for " + self.qualifier)
-        for x in self.boards:
-            self.board_dict[x.name.split()[0]] = x
-            self.velocity_dict[x.name.split()[0]] = pd.DataFrame(columns=['committed', 'completed'])
-
-        for key in tqdm.tqdm(self.board_dict.keys()):
-            board = self.board_dict[key]
-            try:
-                sprinfo = requests.get(rs.server + rs.chart_endpoint + str(board.id), auth=(rs.user_name, rs.api_token))
-            except requests.exceptions.SSLError:
-                print("You have reached your request limit, try again in a few minutes")
-            for i, item in enumerate(sprinfo.json()['velocityStatEntries'].values()):
-                self.velocity_dict[key].loc[i] = [item["estimated"]["value"], item["completed"]["value"]]
-
-    def clean_velocity_dict(self):
-        print("\nRemoving outliers and empty datasets")
-        keys_to_delete = []
-        for key in tqdm.tqdm(self.velocity_dict.keys()):
-            if len(self.velocity_dict[key]["completed"]) == 0:
-                keys_to_delete.append(key)
-            else:
-                df = self.velocity_dict[key]
-                df = df[(np.abs(stats.zscore(df)) < self.outlier_zscore_threshold).all(axis=1)]
-                self.velocity_dict[key] = df
-
-        for x in keys_to_delete:
-            del self.velocity_dict[x]
-
 
 if __name__ == '__main__':
-    plots = ["F"]
+    plots = ["", "FM"]
     j = [JiraPlotter(qualifier=x) for x in plots]
     for x in j:
+        x.get_board_dict()
         x.get_figure()

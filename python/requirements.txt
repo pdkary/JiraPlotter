@@ -1,0 +1,6 @@
+pandas
+jira
+tqdm
+numpy
+matplotlib
+scipy
