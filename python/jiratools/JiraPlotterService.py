@@ -25,8 +25,8 @@ class JiraPlotterService:
         self.zeros = np.zeros(shape=self.shape)
 
         self.confidence_str = str(self.jira_data.confidence * 100)[:2]
-        self.filesuffix = self.jira_data.qualifier if self.jira_data.qualifier != "" else "all"
-        self.filepath = os.pardir + '/static/images/plot_' + self.filesuffix + "_" + self.confidence_str + "_" + self.dt_string + '.png'
+        filesuffix = self.get_file_name()
+        self.filepath = os.pardir + '/static/images/plot_' + filesuffix
 
     @property
     def dt_string(self):
@@ -38,7 +38,7 @@ class JiraPlotterService:
         return "\n".join((
             r'$R^2=%.2f$' % self.jira_data.r_squared,
             r'$y = {0:.3g}x + {1:.3g}$'.format(self.jira_data.coefficients[0], self.jira_data.coefficients[1]),
-            r'boards=%s' % ("\n              ".join([x.name for x in self.jira_data.boards]))
+            r'boards=%s' % ("\n              ".join([x.name for x in self.jira_data.used_boards]))
         ))
 
     def save(self):
@@ -88,6 +88,17 @@ class JiraPlotterService:
 
         plt.savefig(self.filepath)
         plt.close('all')
+        return os.path.abspath(self.filepath)
+
+    def get_file_name(self):
+        if len(self.jira_data.used_boards) != 0:
+            names = [x.name for x in self.jira_data.used_boards]
+            names = [x.split()[0] for x in names]
+            name_str = "-".join(names)
+        else:
+            name_str = "all"
+
+        return name_str + "_" + self.confidence_str + "_" + self.dt_string + ".png"
 
 
 if __name__ == '__main__':

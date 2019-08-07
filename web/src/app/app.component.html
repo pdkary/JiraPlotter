@@ -1,0 +1,29 @@
+<!--The content below is only a placeholder and can be replaced.-->
+<mat-card class="card">
+  <div class="example-container">
+    <h2>Boards</h2>
+
+    <div cdkDropList #todoList="cdkDropList" [cdkDropListData]="todo" [cdkDropListConnectedTo]="[doneList]"
+      class="example-list" (cdkDropListDropped)="drop($event)">
+      <div class="example-box" *ngFor="let item of todo" cdkDrag>{{item}}</div>
+    </div>
+  </div>
+
+  <div class="example-container">
+    <h2>To Visualize</h2>
+
+    <div cdkDropList #doneList="cdkDropList" [cdkDropListData]="done" [cdkDropListConnectedTo]="[todoList]"
+      class="example-list" (cdkDropListDropped)="drop($event)">
+      <div class="example-box" *ngFor="let item of done" cdkDrag>{{item}}</div>
+    </div>
+    <button mat-raised-button color="primary" class="go-button" (click)="click()">GO!</button>
+  </div>
+  <div class="example-container">
+    <div *ngIf="!isImageLoading">
+      <img [src]="imageToShow">
+    </div>
+    <div *ngIf="isImageLoading" class="spinner">
+      <mat-spinner></mat-spinner>
+    </div>
+  </div>
+</mat-card>

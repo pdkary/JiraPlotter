@@ -17,6 +17,18 @@ class JiraDataService:
         self.qualifier = ""
         self.auth_jira = jira.JIRA(options=options, basic_auth=(rs.user_name, rs.api_token))
         self.board_dict = {}
+        self.used_boards = []
+        self.r_squared = 0
+        self.x_values = None
+        self.y_values = None
+        self.coefficients = None
+        self.ciy_plus = None
+        self.ciy_minus = None
+        self.trend_function = None
+
+    def reinit(self):
+        self.board_dict = {}
+        self.used_boards = []
         self.r_squared = 0
         self.x_values = None
         self.y_values = None
@@ -28,7 +40,8 @@ class JiraDataService:
     @property
     def boards(self):
         return [x for x in self.auth_jira.boards() if
-                (self.qualifier.lower() in x.name.lower())]
+                (
+                            self.qualifier.lower() in x.name.lower() and "v2" not in x.name and "v3" not in x.name and "v4" not in x.name)]
 
     @property
     def board_names(self):
@@ -65,9 +78,13 @@ class JiraDataService:
         self.outlier_zscore_threshold = threshold
 
     def get_board_dict(self, boards_to_search=None):
-        boards_to_search = self.boards if boards_to_search is None else boards_to_search
-        print("\nGathering velocity information for " + self.qualifier)
-        for x in tqdm.tqdm(boards_to_search):
+        if boards_to_search is not None:
+            self.used_boards = [x for x in self.boards if x.name in boards_to_search]
+        else:
+            self.used_boards = self.boards
+
+        for x in tqdm.tqdm(self.used_boards):
+            print("\nGathering velocity information for " + x.name)
             self.board_dict[x.name] = BoardData(x.name, x.id)
             self.board_dict[x.name].get_sprints()
 
