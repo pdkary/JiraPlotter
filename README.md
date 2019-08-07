@@ -4,11 +4,6 @@ A data visualization project for analyzing sprint velocity
 **This project is WIP**
 
 ## Usage
-After inputting your Jira-Api token, username, and server domain into the **resources.py** file, in the main method of **jiraplotter.py** create a new instance of **JiraPlotter** 
-```
-projectKey = "Integrations"
-jiraplotter = JiraPlotter(qualifier=projectKey,confidence=.80)
-jiraplotter.get_figure()
-```
-The graph for the project "Integrations" will now appear as **static/images/Integrations_\<confidence_level\>_\<date\>.png**
-
+1. Input your Jira-Api token, username, and server domain into the **resources.py** file.
+2. Run the `JiraFlask.py` main method
+3. From the terminal, run `ng serve` from the `web/` 
