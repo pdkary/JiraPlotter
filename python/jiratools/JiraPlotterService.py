@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import matplotlib
-from jiratools.JiraDataService import JiraDataService
+from jiratools import JiraDataService
 from datetime import datetime
 
 matplotlib.use('agg')
@@ -45,7 +45,7 @@ class JiraPlotterService:
         ax = plt.subplot(111)
         chartBox = ax.get_position()
 
-        ax.plot(self.jira_data.committed, self.jira_data.completed, 'ro', label="data points")
+        ax.plot(self.jira_data.all_committed, self.jira_data.all_completed, 'ro', label="data points")
         ax.plot(self.jira_data.x_values, self.jira_data.y_values, '-', color="blue", label="trendline")
         ax.plot(self.x_space, self.x_space, '--', color="grey", label="y=x")
 
@@ -82,7 +82,7 @@ class JiraPlotterService:
         plt.ylim((0, self.ylim))
         plt.grid()
         plt.title(
-            "%s team story analysis with %s%% Confidence" % (self.jira_data.qualifier, self.confidence_str))
+            "Story point analysis with %s%% Confidence" % self.confidence_str)
         plt.xlabel('Committed Stories')
         plt.ylabel("Completed Stories")
 
@@ -105,7 +105,6 @@ if __name__ == '__main__':
     plots = ["INT", "FIIXC"]
     jiraDataService = JiraDataService()
     for x in plots:
-        jiraDataService.set_qualifier(x)
         jiraDataService.get_board_dict()
         jiraDataService.get_confidence()
         jiraDataService.prune()

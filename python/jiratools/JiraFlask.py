@@ -1,7 +1,8 @@
-from flask import Flask, request,send_file
+from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
-from jiratools.JiraDataService import JiraDataService
-from jiratools.JiraPlotterService import JiraPlotterService
+import JiraDataService
+import JiraPlotterService
+from JiraPlotlyService import JiraPlotlyService
 import json
 import re
 
@@ -17,20 +18,30 @@ def get_boards():
     return json.dumps(dataService.board_names)
 
 
-@app.route('/plot', methods=['GET', 'POST'], )
+@app.route('/plot', methods=['GET', 'POST'])
 def plot_boards():
     if request.method == 'POST':
-        data = [x for x in re.split(REGEX, str(request.data)) if len(x) > 1]
-        dataService.get_board_dict(data)
-        dataService.get_confidence()
-        dataService.prune()
-
+        dataService = get_data_service(request.data)
         plotter = JiraPlotterService(dataService)
         filedata = plotter.save()
-        dataService.reinit()
+
         return send_file(filedata, mimetype='image/gif')
     else:
         return None
+
+@app.route('/data')
+def get_plot_data():
+    dataService = get_data_service()
+    plotly = JiraPlotlyService(dataService)
+    return jsonify(plotly.get_json())
+
+def get_data_service(alist):
+    dataService.reinit()
+    data = [x for x in re.split(REGEX, str(alist)) if len(x) > 1]
+    dataService.get_board_dict(data)
+    dataService.get_confidence()
+    dataService.prune()
+    return dataService
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+requests
 pandas
 jira
 tqdm
@@ -5,3 +6,4 @@ numpy
 matplotlib
 scipy
 flask
+flask_cors

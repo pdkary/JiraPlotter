@@ -1,9 +1,9 @@
 import jira
-import resources.resources as rs
 import tqdm
-from jiratools.BoardData import BoardData
+import BoardData
 import numpy as np
 import scipy.stats as stats
+import jira_resources as rs
 
 options = {
     'server': rs.server
@@ -14,7 +14,6 @@ class JiraDataService:
     def __init__(self, confidence=.80, threshold=3):
         self.outlier_zscore_threshold = threshold
         self.confidence = confidence
-        self.qualifier = ""
         self.auth_jira = jira.JIRA(options=options, basic_auth=(rs.user_name, rs.api_token))
         self.board_dict = {}
         self.used_boards = []
@@ -38,27 +37,29 @@ class JiraDataService:
         self.trend_function = None
 
     @property
+    def jira_boards(self):
+        return [x for x in self.auth_jira.boards() if "v2" not in x.name and "v3" not in x.name and "v4" not in x.name]
+
+    @property
     def boards(self):
-        return [x for x in self.auth_jira.boards() if
-                (
-                            self.qualifier.lower() in x.name.lower() and "v2" not in x.name and "v3" not in x.name and "v4" not in x.name)]
+        return [x for x in self.board_dict.values()]
 
     @property
     def board_names(self):
-        return [x.name for x in self.boards]
+        return [x.name for x in self.jira_boards]
 
     @property
-    def committed(self):
+    def all_committed(self):
         if not self.empty:
-            l = [self.board_dict[x].velocity_df['committed'].tolist() for x in self.board_dict.keys()]
+            l = [x.committed for x in self.boards]
             return [item for sublist in l for item in sublist]
         else:
             return []
 
     @property
-    def completed(self):
+    def all_completed(self):
         if not self.empty:
-            l = [self.board_dict[x].velocity_df['completed'].tolist() for x in self.board_dict.keys()]
+            l = [x.completed for x in self.boards]
             return [item for sublist in l for item in sublist]
         else:
             return []
@@ -67,10 +68,6 @@ class JiraDataService:
     def empty(self):
         return self.board_dict is {}
 
-    def set_qualifier(self, qualifier):
-        self.qualifier = qualifier
-        self.board_dict = {}
-
     def set_confidence(self, confidence):
         self.confidence = confidence
 
@@ -78,10 +75,8 @@ class JiraDataService:
         self.outlier_zscore_threshold = threshold
 
     def get_board_dict(self, boards_to_search=None):
-        if boards_to_search is not None:
-            self.used_boards = [x for x in self.boards if x.name in boards_to_search]
-        else:
-            self.used_boards = self.boards
+        self.used_boards = [x for x in self.jira_boards if
+                            x.name in boards_to_search] if boards_to_search is not None else self.jira_boards
 
         for x in tqdm.tqdm(self.used_boards):
             print("\nGathering velocity information for " + x.name)
@@ -89,25 +84,26 @@ class JiraDataService:
             self.board_dict[x.name].get_sprints()
 
     def get_confidence(self):
-        if len(self.committed) == 0:
+        if len(self.all_committed) == 0:
             return
-        n = len(self.completed)
-        df = len(self.committed) - 1
-        st = min(self.committed) * .9
-        end = max(self.committed) * 1.1
-        xbar = sum(self.committed) / n
-        ybar = sum(self.completed) / n
+        n = len(self.all_completed)
+        df = len(self.all_committed) - 1
+        st = min(self.all_committed) * .9
+        end = max(self.all_committed) * 1.1
+        xbar = sum(self.all_committed) / n
+        ybar = sum(self.all_completed) / n
 
         self.x_values = np.arange(st, end, .5)
-        self.coefficients, SSRes, rank, sing, rcond = np.polyfit(self.committed, self.completed, 1, full=True)
+        self.coefficients, SSRes, rank, sing, rcond = np.polyfit(self.all_committed, self.all_completed, 1, full=True)
         self.trend_function = lambda x: self.coefficients[0] * x + self.coefficients[1]
         self.y_values = self.trend_function(self.x_values)
 
-        SSy = sum([(self.completed[i] - ybar) ** 2 for i in range(n)])
-        SSx = sum([(self.committed[i] - xbar) ** 2 for i in range(n)])
+        SSy = sum([(self.all_completed[i] - ybar) ** 2 for i in range(n)])
+        SSx = sum([(self.all_committed[i] - xbar) ** 2 for i in range(n)])
 
         std_error_estimate = np.sqrt(
-            (sum([(x - xbar) ** 2 for x in self.committed]) + sum([(y - ybar) ** 2 for y in self.completed])) / (n - 1))
+            (sum([(x - xbar) ** 2 for x in self.all_committed]) + sum(
+                [(y - ybar) ** 2 for y in self.all_completed])) / (n - 1))
 
         confidence_interval = lambda x, y: stats.t.ppf(self.confidence, df) * std_error_estimate * np.sqrt(
             1 / n + ((x - xbar) ** 2) / SSx + (y - ybar) ** 2 / SSy)

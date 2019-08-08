@@ -1,4 +1,7 @@
 *.pyc
 *.xml
-python/venv/
-
+/python/venv/
+/venv/
+/python/static
+/.idea/
+/python/.idea/
