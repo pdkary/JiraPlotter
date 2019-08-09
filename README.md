@@ -2,7 +2,8 @@
 A data visualization project for analyzing sprint velocity
 
 **This project is WIP**
-##Installation
+
+## Installation
 1. In the `python/` directory, run `pip install -r requirements.txt`
 2. In the `web/` directory, run `npm install`
 
