@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import matplotlib
-from jiratools import JiraDataService
+from JiraDataService import JiraDataService
 from datetime import datetime
 
 matplotlib.use('agg')
@@ -14,8 +14,8 @@ class JiraPlotterService:
         self.jira_data = jira_data
         self.infostr_props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 
-        self.xlim = self.jira_data.x_values.max() * 1.1
-        self.ylim = max(self.jira_data.ciy_plus.max(), self.jira_data.y_values.max()) * 1.1
+        self.xlim = self.jira_data.x_values.max() * 1.25
+        self.ylim = max(self.jira_data.ciy_plus.max(), self.jira_data.y_values.max()) * 1.25
 
         self.count = self.jira_data.x_values.shape[0]
         self.shape = self.jira_data.x_values.shape
@@ -36,8 +36,8 @@ class JiraPlotterService:
     @property
     def infostr(self):
         return "\n".join((
-            r'$R^2=%.2f$' % self.jira_data.r_squared,
-            r'$y = {0:.3g}x + {1:.3g}$'.format(self.jira_data.coefficients[0], self.jira_data.coefficients[1]),
+            r'$R^2=%.2f$' % self.jira_data.analysis_dto.r_squared,
+            r'$y = {0:.3g}x + {1:.3g}$'.format(self.jira_data.analysis_dto.coefficients[0], self.jira_data.analysis_dto.coefficients[1]),
             r'boards=%s' % ("\n              ".join([x.name for x in self.jira_data.used_boards]))
         ))
 
@@ -45,7 +45,7 @@ class JiraPlotterService:
         ax = plt.subplot(111)
         chartBox = ax.get_position()
 
-        ax.plot(self.jira_data.all_committed, self.jira_data.all_completed, 'ro', label="data points")
+        ax.plot(self.jira_data.analysis_dto.committed, self.jira_data.analysis_dto.completed, 'ro', label="data points")
         ax.plot(self.jira_data.x_values, self.jira_data.y_values, '-', color="blue", label="trendline")
         ax.plot(self.x_space, self.x_space, '--', color="grey", label="y=x")
 

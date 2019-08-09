@@ -1,18 +1,12 @@
+import JiraAnalysisService
+
 
 class JiraPlotlyService:
     def __init__(self, jiraDataService):
         self.jiraDataService = jiraDataService
 
     def get_json(self):
-        out = {}
-        for x in self.jiraDataService.board_dict.keys():
-            out[x] = self.jiraDataService.board_dict[x].to_json()
+        out = {"anaysis": JiraAnalysisService.analyze(self.jiraDataService.data_boards).to_json()}
+        for x in self.jiraDataService.data_boards:
+            out[x.name] = x.to_json()
         return out
-    '''
-    {
-        boardName: {
-            committed: int[],
-            completed: int[]
-            names: string[],
-                 
-    '''

@@ -1,8 +1,7 @@
-import SprintData
+from SprintData import SprintData
 import pandas as pd
 import requests
-import jira_resources.resources as rs
-
+import resources as rs
 
 class BoardData:
 
@@ -39,3 +38,7 @@ class BoardData:
             'committed': self.velocity_df.as_matrix(columns=["committed"]).tolist(),
             'completed': self.velocity_df.as_matrix(columns=["completed"]).tolist(),
             'names': self.sprints.names}
+
+    @property
+    def empty(self):
+        return len(self.committed)==0 and len(self.completed)==0 or (not self.velocity_df["committed"].any() and not self.velocity_df["completed"].any())

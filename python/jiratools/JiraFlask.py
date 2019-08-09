@@ -1,7 +1,7 @@
 from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
-import JiraDataService
-import JiraPlotterService
+from JiraDataService import JiraDataService
+from JiraPlotterService import JiraPlotterService
 from JiraPlotlyService import JiraPlotlyService
 import json
 import re
@@ -35,7 +35,7 @@ def get_plot_data():
     plotly = JiraPlotlyService(dataService)
     return jsonify(plotly.get_json())
 
-def get_data_service(alist):
+def get_data_service(alist=dataService.board_names):
     dataService.reinit()
     data = [x for x in re.split(REGEX, str(alist)) if len(x) > 1]
     dataService.get_board_dict(data)
@@ -43,6 +43,8 @@ def get_data_service(alist):
     dataService.prune()
     return dataService
 
+def run():
+    app.run()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run()
