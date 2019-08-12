@@ -6,7 +6,10 @@ class JiraPlotlyService:
         self.jiraDataService = jiraDataService
 
     def get_json(self):
-        out = {"anaysis": JiraAnalysisService.analyze(self.jiraDataService.data_boards).to_json()}
+        out = {
+            "analysis": JiraAnalysisService.analyze(self.jiraDataService.data_boards).to_json(),
+            "boards" :{}
+        }
         for x in self.jiraDataService.data_boards:
-            out[x.name] = x.to_json()
+            out['boards'][x.name] = x.to_json()
         return out

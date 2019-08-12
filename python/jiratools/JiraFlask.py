@@ -29,9 +29,14 @@ def plot_boards():
     else:
         return None
 
-@app.route('/data')
+@app.route('/data', methods=["GET","POST"])
 def get_plot_data():
-    dataService = get_data_service()
+    print(request.data)
+    print(request.data is not b'')
+    if request.data is not b'':
+        dataService = get_data_service(request.data)
+    else:
+        dataService = get_data_service()
     plotly = JiraPlotlyService(dataService)
     return jsonify(plotly.get_json())
 
