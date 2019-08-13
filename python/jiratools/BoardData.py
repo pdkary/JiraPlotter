@@ -35,8 +35,8 @@ class BoardData:
 
     def to_json(self):
         return {
-            'committed': self.velocity_df.as_matrix(columns=["committed"]).tolist(),
-            'completed': self.velocity_df.as_matrix(columns=["completed"]).tolist(),
+            'committed': self.velocity_df["committed"].tolist(),
+            'completed': self.velocity_df["completed"].tolist(),
             'names': self.sprints.names}
 
     @property

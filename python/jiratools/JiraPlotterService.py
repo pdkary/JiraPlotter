@@ -26,7 +26,7 @@ class JiraPlotterService:
 
         self.confidence_str = str(self.jira_data.confidence * 100)[:2]
         filesuffix = self.get_file_name()
-        self.filepath = os.pardir + '/static/images/plot_' + filesuffix
+        self.filepath = os.getcwd() + '\\static\\images\\plot_' + filesuffix
 
     @property
     def dt_string(self):
