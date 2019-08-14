@@ -1,18 +1,17 @@
-import pandas as pd
+from jiratools.VelocityFrame import VelocityFrame
 
 
-class SprintData:
-
-    def __init__(self, jira_sprint_object):
-        self.velocity_df = pd.DataFrame(columns=['name', 'committed', 'completed'])
-        self.sprinfo = jira_sprint_object.json()
-        self.names = [x["name"] for x in self.sprinfo["sprints"]]
-        self.get_sprint_info()
-
-    def get_sprint_info(self):
-        for i, sprint in enumerate(self.sprinfo['sprints']):
+class SprintData(VelocityFrame):
+    """
+    Encapsulates Data from all sprints within given object as a DataFrame
+    """
+    def __init__(self, sprint_list_obj):
+        super().__init__()
+        for i, sprint in enumerate(sprint_list_obj['sprints']):
+            sprint_id = str(sprint["id"])
             name = sprint["name"]
-            id = str(sprint["id"])
-            velocityStats = self.sprinfo["velocityStatEntries"][id]
-            self.velocity_df.loc[i] = [name, velocityStats["estimated"]["value"], velocityStats["completed"]["value"]]
-        self.velocity_df = self.velocity_df.set_index("name")
+            committed = sprint_list_obj["velocityStatEntries"][sprint_id]["estimated"]["value"]
+            completed = sprint_list_obj["velocityStatEntries"][sprint_id]["completed"]["value"]
+            self.add(name, committed, completed)
+
+        self.df = self.df.set_index("name")

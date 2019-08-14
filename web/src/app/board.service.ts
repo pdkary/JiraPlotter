@@ -9,13 +9,17 @@ import { AnalysisWrapper } from 'src/data/AnalysisWrapper';
 })
 export class BoardService {
   getURL = "http://127.0.0.1:5000/boards";
-  postURL = "http://127.0.0.1:5000/data";
+  dataURL = "http://127.0.0.1:5000/data";
+  imgURL = "http://127.0.0.1:5000/plot";
   constructor(private httpclient:HttpClient){}
 
   getBoards(): Observable<String[]> {
     return <Observable<String[]>> this.httpclient.get(this.getURL);
   }
-  postBoards(boards: String[]): Observable<AnalysisWrapper> {
-    return <Observable<AnalysisWrapper>> this.httpclient.post(this.postURL,boards.join(","));
+  postData(boards: String[]): Observable<AnalysisWrapper> {
+    return <Observable<AnalysisWrapper>> this.httpclient.post(this.dataURL,boards.join(","));
+  }
+  postImg(boards: String[]): Observable<Blob> {
+    return <Observable<Blob>> this.httpclient.post(this.imgURL,boards.join(','),{responseType:'blob'});
   }
 }

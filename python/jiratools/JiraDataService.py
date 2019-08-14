@@ -5,6 +5,7 @@ import JiraAnalysisService
 import numpy as np
 import scipy.stats as stats
 import resources as rs
+from datetime import datetime
 
 options = {
     'server': rs.server
@@ -53,6 +54,11 @@ class JiraDataService:
     def empty(self):
         return self.board_dict is {}
 
+    @property
+    def dt_string(self):
+        now = datetime.now()
+        return now.strftime("%d-%m-%Y")
+
     def set_confidence(self, confidence):
         self.confidence = confidence
 
@@ -66,7 +72,6 @@ class JiraDataService:
         for x in tqdm.tqdm(self.used_boards):
             print("\nGathering velocity information for " + x.name)
             self.board_dict[x.name] = BoardData(x.name, x.id)
-            self.board_dict[x.name].get_sprints()
 
     def get_confidence(self):
         self.analysis_dto = JiraAnalysisService.analyze(self.boards)
@@ -90,7 +95,7 @@ class JiraDataService:
         print("\nRemoving outliers and empty datasets")
         for board_name in tqdm.tqdm(self.board_dict.keys()):
             board = self.board_dict[board_name]
-            if not board.velocity_df.empty:
-                board.velocity_df = board.velocity_df[(board.velocity_df.T != 0).any()]
-                board.velocity_df = board.velocity_df[
-                    (np.abs(stats.zscore(board.velocity_df)) < self.outlier_zscore_threshold).all(axis=1)]
+            if not board.empty:
+                board.df = board.df[(board.df.T != 0).any()]
+                board.df = board.df[(np.abs(stats.zscore(board.df)) < self.outlier_zscore_threshold).all(axis=1)]
+

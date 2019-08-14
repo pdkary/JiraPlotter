@@ -15,7 +15,7 @@ dataService = JiraDataService()
 
 @app.route('/boards')
 def get_boards():
-    return json.dumps(dataService.board_names)
+    return json.dumps(dataService.data_boards)
 
 
 @app.route('/plot', methods=['GET', 'POST'])

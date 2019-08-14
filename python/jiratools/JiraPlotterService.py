@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import matplotlib
-from JiraDataService import JiraDataService
 from datetime import datetime
 
 matplotlib.use('agg')
@@ -10,8 +9,13 @@ matplotlib.use('agg')
 
 class JiraPlotterService:
 
-    def __init__(self, jira_data):
-        self.jira_data = jira_data
+    def __init__(self, dataService):
+        self.jira_data = dataService
+        self.confidence_str = str(self.jira_data.confidence * 100)[:2]
+
+        filesuffix = self.get_file_name()
+        self.filepath = os.getcwd() + '/static/images/plot_' + filesuffix
+
         self.infostr_props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 
         self.xlim = self.jira_data.x_values.max() * 1.25
@@ -24,12 +28,9 @@ class JiraPlotterService:
         self.ymax = np.ones(shape=self.shape) * self.ylim
         self.zeros = np.zeros(shape=self.shape)
 
-        self.confidence_str = str(self.jira_data.confidence * 100)[:2]
-        filesuffix = self.get_file_name()
-        self.filepath = os.getcwd() + '\\static\\images\\plot_' + filesuffix
 
     @property
-    def dt_string(self):
+    def now_string(self):
         now = datetime.now()
         return now.strftime("%d-%m-%Y")
 
@@ -85,8 +86,12 @@ class JiraPlotterService:
             "Story point analysis with %s%% Confidence" % self.confidence_str)
         plt.xlabel('Committed Stories')
         plt.ylabel("Completed Stories")
+        try:
+            plt.savefig(self.filepath)
+        except FileNotFoundError:
+            self.filepath = os.pardir + '/static/images/plot_' + self.get_file_name()
+            plt.savefig(self.filepath)
 
-        plt.savefig(self.filepath)
         plt.close('all')
         return os.path.abspath(self.filepath)
 
@@ -98,16 +103,4 @@ class JiraPlotterService:
         else:
             name_str = "all"
 
-        return name_str + "_" + self.confidence_str + "_" + self.dt_string + ".png"
-
-
-if __name__ == '__main__':
-    plots = ["INT", "FIIXC"]
-    jiraDataService = JiraDataService()
-    for x in plots:
-        jiraDataService.get_board_dict()
-        jiraDataService.get_confidence()
-        jiraDataService.prune()
-
-        plotter = JiraPlotterService(jiraDataService)
-        plotter.save()
+        return name_str + "_" + self.confidence_str + "_" + self.now_string + ".png"
