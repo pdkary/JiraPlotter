@@ -1,4 +1,4 @@
-from jiratools.SprintData import SprintData
+from frames.SprintData import SprintData
 
 
 class BoardData(SprintData):

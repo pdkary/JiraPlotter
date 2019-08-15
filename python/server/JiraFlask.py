@@ -1,8 +1,8 @@
 from flask import Flask, request, send_file
 from flask_cors import CORS
-from JiraDataService import JiraDataService
-from JiraPlotterService import JiraPlotterService
-import JiraAnalysisService
+from services.JiraDataService import JiraDataService
+from services.JiraPlotterService import JiraPlotterService
+from services import JiraAnalysisService
 import json
 import re
 
@@ -13,6 +13,7 @@ CORS(app)
 print("gathering dataset")
 dataService = JiraDataService()
 print("done")
+
 
 @app.route('/boards')
 def get_boards():
@@ -25,14 +26,14 @@ def plot_boards():
         names = [x for x in re.split(REGEX, str(request.data)) if len(x) > 1]
         boards = dataService.get_by_names(names)
         plottingDto = JiraAnalysisService.get_plotting_dto(boards)
-        plotter = JiraPlotterService(plottingDto,names)
+        plotter = JiraPlotterService(plottingDto, names)
         filedata = plotter.save()
         return send_file(filedata, mimetype='image/gif')
     else:
         return None
 
 
-@app.route('/data', methods=["GET","POST"])
+@app.route('/data', methods=["GET", "POST"])
 def get_plot_data():
     names = [x for x in re.split(REGEX, request.data) if len(x) > 1]
     boards = dataService.get_by_names(names)

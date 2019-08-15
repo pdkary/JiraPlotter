@@ -1,4 +1,4 @@
-import JiraAnalysisService
+from services import JiraAnalysisService
 
 
 class JiraPlotlyService:

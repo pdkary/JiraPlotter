@@ -1,8 +1,6 @@
-from JiraAnalysisDto import JiraAnalysisDto
-import numpy as np
+from dtos.JiraAnalysisDto import JiraAnalysisDto
 import scipy.stats as stats
 import resources as rs
-
 
 class JiraPlottingDto(JiraAnalysisDto):
     def __init__(self, analysisDto):

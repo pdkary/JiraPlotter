@@ -1,4 +1,4 @@
-from jiratools.VelocityFrame import VelocityFrame
+from frames.VelocityFrame import VelocityFrame
 import requests
 import resources as rs
 import json

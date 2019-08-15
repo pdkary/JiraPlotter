@@ -1,7 +1,7 @@
 import jira
 import resources as rs
 import re
-from BoardData import BoardData
+from frames.BoardData import BoardData
 import time
 import tqdm
 
