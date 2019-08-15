@@ -1,6 +1,7 @@
 import pandas as pd
-
-
+import numpy as np
+import scipy.stats as stats
+import resources as rs
 class VelocityFrame:
     def __init__(self):
         self.df = pd.DataFrame(columns=["name", "committed", "completed"])
@@ -23,6 +24,11 @@ class VelocityFrame:
     @property
     def empty(self):
         return not self.committed.any() and not self.completed.any()
+
+    def prune(self):
+        if not self.empty:
+            self.df = self.df[(self.df.T != 0).any()]
+            self.df = self.df[(np.abs(stats.zscore(self.df)) < rs.zscore).all(axis=1)]
 
     def to_json(self):
         return {

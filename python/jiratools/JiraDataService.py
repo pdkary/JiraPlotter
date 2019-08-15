@@ -1,101 +1,80 @@
 import jira
-import tqdm
-from BoardData import BoardData
-import JiraAnalysisService
-import numpy as np
-import scipy.stats as stats
 import resources as rs
-from datetime import datetime
+import re
+from BoardData import BoardData
+import time
+import tqdm
 
-options = {
-    'server': rs.server
-}
+jiraService = jira.JIRA(options=rs.options, basic_auth=(rs.user_name, rs.api_token))
+
+jiraService.sprints
+
+invalid_names = ["v2", "v3", "v4", "discovery", "feedback", "allprojects", "writing"]
+d_pattern = re.compile("\w+D")
+appos_pattern = re.compile("\w+'s")
+
+
+def is_valid_board_name(board_name):
+    if any(name in board_name.lower() for name in invalid_names) or d_pattern.match(board_name) or appos_pattern.match(
+            board_name):
+        return False
+    return True
 
 
 class JiraDataService:
-    def __init__(self, confidence=.80, threshold=3):
-        self.outlier_zscore_threshold = threshold
-        self.confidence = confidence
-        self.auth_jira = jira.JIRA(options=options, basic_auth=(rs.user_name, rs.api_token))
-        self.board_dict = {}
-        self.used_boards = []
-        self.ciy_plus = None
-        self.ciy_minus = None
-        self.analysis_dto = None
-        self.x_values = []
-        self.y_values = []
 
-    def reinit(self):
-        self.board_dict = {}
-        self.used_boards = []
-        self.ciy_plus = None
-        self.ciy_minus = None
-        self.analysis_dto = None
-        self.x_values = []
-        self.y_values = []
+    def __init__(self):
+        self.all_boards = []
+        self.filtered_boards = []
+        self.data_boards = []
+        self.get_boards()
 
-    @property
-    def jira_boards(self):
-        return [x for x in self.auth_jira.boards() if "v2" not in x.name and "v3" not in x.name and "v4" not in x.name]
+    def get_all_boards(self):
+        self.all_boards = jiraService.boards()
+        return self.all_boards
 
-    @property
-    def boards(self):
-        return self.board_dict.values()
+    def get_filtered_boards(self):
+        if len(self.all_boards) == 0:
+            boards_to_filter = self.get_all_boards()
+        else:
+            boards_to_filter = self.all_boards
+        return [x for x in boards_to_filter if is_valid_board_name(x.name)]
 
-    @property
-    def board_names(self):
-        return [x.name for x in self.jira_boards]
-
-    @property
-    def data_boards(self):
-        return [x for x in self.board_dict.values() if not x.empty]
-
-    @property
-    def empty(self):
-        return self.board_dict is {}
-
-    @property
-    def dt_string(self):
-        now = datetime.now()
-        return now.strftime("%d-%m-%Y")
-
-    def set_confidence(self, confidence):
-        self.confidence = confidence
-
-    def set_threshold(self, threshold):
-        self.outlier_zscore_threshold = threshold
-
-    def get_board_dict(self, boards_to_search=None):
-        self.used_boards = [x for x in self.jira_boards if
-                            x.name in boards_to_search] if boards_to_search is not None else self.jira_boards
-
-        for x in tqdm.tqdm(self.used_boards):
-            print("\nGathering velocity information for " + x.name)
-            self.board_dict[x.name] = BoardData(x.name, x.id)
-
-    def get_confidence(self):
-        self.analysis_dto = JiraAnalysisService.analyze(self.boards)
-
-        n = len(self.analysis_dto.committed)
-        df = n - 1
-        st = min(self.analysis_dto.committed)*.75
-        end = max(self.analysis_dto.committed)*1.25
-        trend_function = lambda x: self.analysis_dto.coefficients[0] * x + self.analysis_dto.coefficients[1]
-
-        self.x_values = np.arange(st, end, .5)
-        self.y_values = trend_function(self.x_values)
-
-        confidence_interval = lambda x, y: stats.t.ppf(self.confidence, df) * self.analysis_dto.std_err * np.sqrt(
-            1 / n + ((x - self.analysis_dto.xbar) ** 2) / self.analysis_dto.SSx + (y - self.analysis_dto.ybar) ** 2 / self.analysis_dto.SSy)
-
-        self.ciy_plus = self.y_values + confidence_interval(self.x_values, self.y_values)
-        self.ciy_minus = self.y_values - confidence_interval(self.x_values, self.y_values)
-
-    def prune(self):
-        print("\nRemoving outliers and empty datasets")
-        for board_name in tqdm.tqdm(self.board_dict.keys()):
-            board = self.board_dict[board_name]
+    def get_boards(self):
+        if len(self.filtered_boards) == 0:
+            boards_to_get = self.get_filtered_boards()
+        else:
+            boards_to_get = self.filtered_boards
+        for x in tqdm.tqdm(boards_to_get):
+            board = BoardData(x.name, x.id)
+            board.prune()
             if not board.empty:
-                board.df = board.df[(board.df.T != 0).any()]
-                board.df = board.df[(np.abs(stats.zscore(board.df)) < self.outlier_zscore_threshold).all(axis=1)]
+                self.data_boards += [board]
+        return self.data_boards
 
+    @property
+    def board_dict(self):
+        if len(self.data_boards) == 0:
+            boards_to_dictify = self.get_boards()
+        else:
+            boards_to_dictify = self.data_boards
+        return dict([(x.name, x) for x in boards_to_dictify])
+
+    @property
+    def names(self):
+        return [x.name for x in self.data_boards]
+
+    def get_by_names(self, name_list):
+        return [self.board_dict[x] for x in name_list]
+
+
+if __name__ == '__main__':
+    start = time.time()
+    j = JiraDataService()
+    end = time.time()
+    print("instantiation time: " + str(end - start))
+    start2 = time.time()
+    cd = j.get_by_names(["CV6 board", "DA board"])
+    intb = j.get_by_names(["INT board"])
+    end2 = time.time()
+    print("get time: " + str(end2 - start2))
