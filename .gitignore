@@ -2,6 +2,7 @@
 *.xml
 *.lock
 **-lock.json
+
 /venv/
 /.vscode/
 /.idea/
