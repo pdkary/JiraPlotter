@@ -23,7 +23,7 @@ def get_boards():
 @app.route('/plot', methods=['GET', 'POST'])
 def plot_boards():
     if request.method == 'POST':
-        names = [x for x in re.split(REGEX, str(request.data)) if len(x) > 1]
+        names = get_names(request.data)
         boards = dataService.get_by_names(names)
         plottingDto = JiraAnalysisService.get_plotting_dto(boards)
         plotter = JiraPlotterService(plottingDto, names)
@@ -35,10 +35,16 @@ def plot_boards():
 
 @app.route('/data', methods=["GET", "POST"])
 def get_plot_data():
-    names = [x for x in re.split(REGEX, request.data) if len(x) > 1]
+    names = get_names(request.data)
     boards = dataService.get_by_names(names)
     return JiraAnalysisService.get_analysis_dto(boards)
 
+@app.route('/test', methods=["GET","POST"])
+def test():
+    return "test"
+
+def get_names(data):
+    return [x for x in re.split(REGEX, str(data)) if len(x) > 1]
 
 def run():
     app.run()

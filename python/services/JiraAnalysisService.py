@@ -1,5 +1,5 @@
 from dtos.JiraAnalysisDto import JiraAnalysisBuilder
-from dtos import JiraPlottingDto
+from dtos.JiraPlottingDto import JiraPlottingDto
 import numpy as np
 
 

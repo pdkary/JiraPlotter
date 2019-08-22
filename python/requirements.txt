@@ -7,3 +7,5 @@ matplotlib
 scipy
 flask
 flask_cors
+waitress
+flaskr

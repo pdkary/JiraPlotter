@@ -81,6 +81,5 @@ export class AppComponent implements OnInit {
       }],
       title: 'Stories Committed vs Stories Completed'
     },'#chart');
-    this.isImageLoading=false;
   }
 }
