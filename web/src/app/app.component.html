@@ -20,8 +20,8 @@
   </div>
   <div class="example-container">
     <div *ngIf="!isImageLoading">
-      <!-- <img [src]="imageToShow"> -->
-      <div id='chart'></div>
+      <img [src]="imageToShow">
+      <!-- <div id='chart'></div> -->
     </div>
     <div *ngIf="isImageLoading" class="spinner">
       <mat-spinner></mat-spinner>
