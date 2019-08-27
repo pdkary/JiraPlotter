@@ -1,16 +1,12 @@
 # JiraPlotter
-A data visualization project for analyzing sprint velocity
+A data visualization project for analyzing sprint velocity using Jira API and Matplotlib
 
-**This project is WIP**
+## Setup
+In the file **python/resources.py** file, replace the placeholders with your atlassian username and api token.
 
 ## Installation
-1. In the `python/` directory, run `pip install -r requirements.txt`
-2. In the `web/` directory, run `npm install`
+1. From the root directory run `sh install.sh` 
 
 ## Usage
-1. Input your Jira-Api token, username, and server domain into the **resources.py** file.
-2. From terminal run `python python/start.py`
-3. `cd web`
-4. `ng serve`
-
-then go to `http://localhost:4200`
+1. From the root directory run `sh start.sh`
+2. Open a browser and go to `http://localhost:4200`
