@@ -1,8 +1,13 @@
 *.pyc
 *.xml
-/python/venv/
+*.lock
+**-lock.json
+
 /venv/
-/python/static
-/.idea/
-/python/.idea/
 /.vscode/
+/.idea/
+
+/python/venv/
+/python/static/
+/python/.idea/
+/python/node_modules/

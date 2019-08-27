@@ -39,13 +39,22 @@ export class AppComponent implements OnInit {
 
   click() {
     this.isImageLoading = true;
-    this.boardService.postBoards(this.done).subscribe(s => {
-      this.loadChart(<AnalysisWrapper> s);
+    this.boardService.postImg(this.done).subscribe(s => {
+      this.createImageFromBlob(s);
       this.isImageLoading = false;
     }, error => {
       this.isImageLoading = false;
       console.log(error);
     });
+  }
+  createImageFromBlob(image: Blob) {
+    let reader = new FileReader();
+    reader.addEventListener("load", () => {
+      this.imageToShow = reader.result;
+    }, false);
+    if (image) {
+      reader.readAsDataURL(image);
+    }
   }
   loadChart(wrapper: AnalysisWrapper){
     let data: Object[]=[];
@@ -72,6 +81,5 @@ export class AppComponent implements OnInit {
       }],
       title: 'Stories Committed vs Stories Completed'
     },'#chart');
-    this.isImageLoading=false;
   }
 }

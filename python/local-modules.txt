@@ -1,2 +1,0 @@
-jiratools
-jira_resources
