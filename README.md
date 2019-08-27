@@ -5,7 +5,8 @@ A data visualization project for analyzing sprint velocity using Jira API and Ma
 In the file **python/resources.py** file, replace the placeholders with your atlassian username and api token.
 
 ## Installation
-1. From the root directory run `sh install.sh` 
+1. Clone the project from github and cd into the root directory
+2. In Terminal from the root directory run `sh install.sh` 
 
 ## Usage
 1. From the root directory run `sh start.sh`
