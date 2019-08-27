@@ -1,5 +1,5 @@
-api_token = "1W0p81LP7VNKaZLLFOQUE070"
-user_name = "parker.kary@fiixsoftware.com"
+api_token = "YOUR_ATLASSIAN_API_KEY"
+user_name = "YOUR_ATLASSIAN_USERNAME"
 server = "https://macmms.atlassian.net"
 
 chart_endpoint = "/rest/greenhopper/1.0/rapid/charts/velocity.json?rapidViewId="
