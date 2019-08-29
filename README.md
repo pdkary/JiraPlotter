@@ -1,6 +1,10 @@
 # JiraPlotter
 A data visualization project for analyzing sprint velocity using Jira API and Matplotlib
 
+## Requirements
+- Npm
+- Python3
+- Yarn
 ## Setup
 In the file **python/resources.py** file, replace the placeholders with your atlassian username and api token.
 
